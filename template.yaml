@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  StepFuntions
+
+  Sample SAM Template for StepFuntions
+
+Resources:
+
+  TriggerStepFunctionsRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "EventRule"
+      ScheduleExpression: "rate(1 minute)"
+      State: "ENABLED"
+      Targets:
+      - Arn:
+          Ref: "StateMachine"
+        Id: SFN_Target
+        RoleArn: !GetAtt ExecuteStateMachineRole.Arn
+
+  ExecuteStateMachineRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Sid: "AllowCWEServiceToAssumeRole"
+          Effect: "Allow"
+          Action:
+          - "sts:AssumeRole"
+          Principal:
+            Service:
+            - "events.amazonaws.com"
+      Path: "/"
+      Policies:
+      - PolicyName: "ExecuteStateMachine"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "states:StartExecution"
+            Resource: "*"
+
+  StateMachineRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "states.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Path: "/"
+
+  StateMachine:
+    Type: "AWS::StepFunctions::StateMachine"
+    Properties:
+      RoleArn: !GetAtt StateMachineRole.Arn
+      StateMachineName: ScheduledStateMachine
+      DefinitionString: !Sub |-
+        {
+          "Comment": "Scheduled by CloudWatch Events",
+          "StartAt": "Do Something",
+          "States": {
+            "Do Something": {
+              "Type": "Pass",
+              "Result" : "Work Complete!",
+              "End": true
+            }
+          }
+        }
