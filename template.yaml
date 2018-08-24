@@ -70,6 +70,7 @@ Resources:
             "Do Something": {
               "Type": "Pass",
               "Result" : "Work Complete!",
+              "ResultPath": "$.taskresult",
               "End": true
             }
           }
